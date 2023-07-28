@@ -1,2 +1,6 @@
 # Reinforcement-Learning-Algorithms-From-Scratch
-Welcome to my RL Algorithms repository! Here, I present handcrafted implementations of Reinforcement Learning methods from scratch, avoiding any external RL libraries. Unravel the core concepts and inner workings while exploring various algorithms. Let's delve into the world of RL, understanding every line of code.
+Description:
+Welcome to the Reinforcement Learning Algorithms from Scratch repository! This project showcases a collection of essential Reinforcement Learning (RL) algorithms implemented entirely from scratch, without relying on any external RL libraries. Here, we delve into the fascinating world of RL, enabling you to gain a deeper understanding of the underlying concepts and mechanisms that power intelligent decision-making systems.
+
+Motivation:
+The primary motivation behind this project is to demystify the inner workings of popular RL algorithms. While various RL libraries offer robust implementations, their complexity might obscure the fundamental principles for newcomers and enthusiasts alike. By crafting these algorithms from scratch, we aim to provide a transparent and educative journey that enables learners to grasp RL concepts more comprehensively.
