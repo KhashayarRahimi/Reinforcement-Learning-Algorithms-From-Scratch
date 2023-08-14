@@ -3,7 +3,6 @@ import random
 from tabulate import tabulate
 from tqdm import tqdm
 import ast
-
 class MonteCarlo:
     def __init__(self):
         pass
@@ -133,533 +132,448 @@ class MonteCarlo:
             Neighbors.append(neighbor)
 
         return Neighbors
-
-    def policy_evaluation(self, threshold,gamma,randomness):
-        random.seed(42)
-
-        grid_size = environment[0]*environment[1]
+    
+    def arbitrary_policy(self, randomness):
+        #random.seed(randomness)
         
-        grid_cells = environment[6]
-
-        Actions = [[1,0],[-1,0],[0,1],[0,-1]]
-
-        prob_dist = probability_distribution(environment[0]*environment[1],randomness)
-        
-        #this dictionary stores state indices with their linear number; [0,0] = 0 ,..., [m,n] = m.n 
-        indice_state_dict = {}
-        for num in range(grid_size):
-
-            indice_state_dict[num] = grid_cells[num]
-        
-
-        state_indice_dict = {}
-        counter = 0
-        for state in grid_cells:
-
-            state = str(state)
-            state_indice_dict[state] = counter
-            counter = counter + 1
-
-        #initialize the state values with zeros - minus 1 is because of terminal state or goal
-        V_old = np.zeros((grid_size , 1))
-        V_new = np.zeros((grid_size , 1))
-        
-        Counter = 0
-        delta = threshold + 0.2
-        while delta >= threshold:
-            Delta = []
-            for state_num in range(grid_size):
-
-                state = indice_state_dict[state_num]
-                #state_indice = '{}{}'.format(row,col)
-
-                if state not in environment[4]: 
-
-                    first_sigma = 0
-                    #print('come to loop',state)
-                
-                    for action in range(4):
-                        #print(action)
-
-
-                        #as we are working on random policy the pi(a|s) = 1/4; equal probable
-                        pi = 1/4
-
-                        neighbors = self.neighbor_cells(state)
-                        #print(neighbors)
-                        
-                        #second sigma in the Bellman equation
-                        
-                        intended_state = [x + y for x, y in zip(state, Actions[action])]
-                        #inverse_state = 
-                        second_sigma = 0
-                        second_sigma_list = []
-                        for neighbor in neighbors:
-                            #print('third loop')
-
-                            prob_list = prob_dist[state_num].copy()
-
-                            if neighbor == intended_state:
-
-                                #print(prob_list)
-                                p = max(prob_list)
-                                prob_list.remove(p)
-                                #print(p)
-
-                            else:
-
-                                p = random.choice(prob_dist[state_num]) #prob_dist[state_num][action-1]
-                                #print(p)
-                            
-                            if neighbor in grid_cells:
-                                indice = state_indice_dict[str(neighbor)]
-                            
-                            #if the agent reach the goal, we eliminate the -1 reward
-                            if intended_state == environment[3]:
-
-                                second_sigma = second_sigma + p*(100000+gamma*V_old[indice])
-                            
-                            #in this part we dedicated a very large negative reward if the agent drop on a hole
-                            elif neighbor in environment[4]:
-
-                                second_sigma = second_sigma + p*(-2 + gamma*V_old[indice])
-                            #in other states, which are not the teriminal state or holes; reward = -1
-
-                            elif neighbor not in grid_cells:
-
-                                second_sigma = second_sigma + p*(-1)
-
-                            else:
-                                second_sigma = second_sigma + p*(-1 + gamma*V_old[indice])
-
-                        second_sigma_list.append(pi * second_sigma)
-                        
-                    first_sigma = sum(second_sigma_list) #first_sigma + pi * second_sigma_list[action]
-                    
-                    V_new[state_num] = first_sigma
-                    if state == [3,3]:
-
-                        print('[3,3]:',first_sigma,second_sigma_list)
-                
-            
-            
-                #if Counter == 0:
-
-                delta_ = max([0,np.abs(V_new[state_num] - V_old[state_num])])
-                Delta.append(delta_)
-
-                    #Counter = Counter + 1
-
-                """else:
-
-                    delta_ = max([delta_,np.abs(V_new[state_num] - V_old[state_num])])
-                    Delta.append(delta_)
-
-                    Counter = Counter + 1"""
-                #print(V_old)
-                #print('=====')
-                #print(V_new)
-                V_old[state_num] = V_new[state_num]
-            
-            delta = max(Delta)
-            print(delta)
-            #print(Delta)
-            #print('delta:',delta)
-            #print(Counter)
-                
-        Final_dict = {}
-        for state in grid_cells:
+        policy = {}
+        policy_action = {}
+        for state in environment[6]:
 
             if state not in environment[4]:
 
-                Final_dict[str(state)] = V_new[state_indice_dict[str(state)]]
+                neighbors = self.neighbor_cells(state)[0]
+                Actions_Neighbors = self.neighbor_cells(state)[1]
 
-        return Final_dict
-    
-    def find_optimal_path(self, StateValue):
+                allowed_positions = []
 
-        start = environment[2]
-        goal = environment[3]
-
-        path = []
-
-        #neighbors = neighbor_cells(start)
-        
-        next_move = start
-        ex_move = []
-        counter = 0
-        checked_states = []
-        
-        while goal not in DynamicProgramming.neighbor_cells(next_move):
-
-            neighbor_values = {}
-            """if counter != 0:
-                Neighbors_ = neighbor_cells(next_move)
-                Neighbors = Neighbors_.copy()
-                for neighbor in Neighbors:
-
-                    if neighbor in checked_states:
-
-                        Neighbors.remove(neighbor)
-                #print(counter, Neighbors)
-            
-            else:
-                Neighbors = neighbor_cells(next_move).copy()"""
-            
-            #for neighbor in
-            Neighbors = neighbor_cells(next_move)
-
-            Allowed_Neighbors = Neighbors.copy()
-
-            for neighbor in Allowed_Neighbors:
-
-                if neighbor in checked_states:
-
-                        Allowed_Neighbors.remove(neighbor)
-
-
-
-            for neighbor in Allowed_Neighbors:
+                for neighbor in neighbors:
+                    
+                    if neighbor in environment[6] and neighbor not in environment[4]:
+                        
+                        allowed_positions.append(neighbor)
                 
-                if neighbor in environment[6] and neighbor not in environment[4]:
-
-                    value = StateValue[str(neighbor)][0]
-
-                    neighbor_values[value] = neighbor
-                    #checked_states.append(neighbor)
-            #ex_move = next_move
-            """for state in Neighbors:
-
-                if state in environment[6]:
-
-                    checked_states.append(state)"""
-            print(neighbor_values)
-
-            maximum_value = max(list(neighbor_values.keys()))
-
-            next_move = neighbor_values[maximum_value]
-
-            checked_states.append(next_move)
-
-            print(next_move)
-
-            path.append(next_move)
-            
-            counter += 1
-        path.append(environment[3])
-        return path
-
-        if goal in neighbor_cells(next_move):
-
-            return "Just one step" #should be edited later
-    
-    def policy(self, state):
-
-        Neighbors = neighbor_cells(state)
-
-        neighbor_values = {}
-
-        for neighbor in Neighbors:
-
-            if neighbor in environment[6] and neighbor not in environment[4]:
-
-                neighbor_values[states_values['{}'.format(neighbor)][0]] = '{}'.format(neighbor)
-        
-        best_val = max(list(neighbor_values.keys()))
-        best_neighbor = neighbor_values[best_val]
-
-        return best_neighbor
-    
-    def arbitrary_policy(self, randomness):
-            grid_cells = environment[6]
-            Actions = [[1, 0], [-1, 0], [0, 1], [0, -1]]
-            policy = {}
-
-            for state in grid_cells:
-                if state not in environment[4]:
-                    neighbors = self.neighbor_cells(state)
-                    allowed_positions = []
-
-                    for neighbor in neighbors:
-                        if neighbor in grid_cells and neighbor not in environment[4]:
-                            allowed_positions.append(neighbor)
-
+                if len(allowed_positions) > 0:
+                    
                     next_state = random.choice(allowed_positions)
+                    row = next_state[0] - state[0]
+                    col = next_state[1] - state[1]
+                    PolicyAction = [row, col]
+
                     policy['{}'.format(state)] = next_state
+                    policy_action['{}'.format(state)] = PolicyAction
 
-            return policy
+
+
+        return policy, policy_action
+    def generate_trajectory(self, policy,randomnumber,state_prob_type):
+
+        policy_action = policy[1]
+
+        probs = self.probability_distribution(environment[0]*environment[1],state_prob_type)
+        
+        start = environment[2]
+
+        terminate = start
+
+        trajectory = [start]
+        c = 0
+        test = []
+        while terminate != environment[3]:
+            random.seed(randomnumber+c)
+            Actions = [[1,0],[-1,0],[0,1],[0,-1]]
+
+            action = policy_action[str(terminate)]
+            Actions.remove(action)
+            #sorted_actions = [action]
+            sorted_actions = Actions + [action]
+            #print(sorted_actions)
+            state_indice = state_indice_dict[str(terminate)]
+            actions_prob = probs[state_indice]
+            actions_prob.sort()
+            #print(actions_prob)
+            #print(actions_prob)
+
+
+            selected_action = random.choices(sorted_actions, actions_prob)[0]
+            
+            next_state = [x + y for x, y in zip(terminate, selected_action)]
+            
+            #if the agent goes out of the gridworld, it stays in its current state
+            if next_state not in environment[6]:
+
+                next_state = terminate
+            
+            #if it drops into the holes, it goes to the start points
+            elif next_state in environment[4]:
+
+                next_state = start
+
+            
+            terminate = next_state
+
+            trajectory.append(terminate)
+            c = c+1
+
+        return trajectory
     
-    def policy_iteration(self, threshold,gamma,randomness,state_prob_type):
     
-        random.seed(randomness)
+    
+    def state_reward(self, policy,state):
+
+        policy_state = policy[0]
         
-        policy_0 = self.arbitrary_policy(42)
+        next_state = policy_state[str(state)]
 
+        if next_state in environment[4]:
 
-        grid_size = environment[0]*environment[1]
-
-        grid_cells = environment[6]
-
-        prob_dist = self.probability_distribution(environment[0]*environment[1],state_prob_type)
+            r = -3
         
-        #this dictionary stores state indices with their linear number; [0,0] = 0 ,..., [m,n] = m.n 
-        indice_state_dict = {}
-        for num in range(grid_size):
+        elif next_state == environment[3]:
 
-            indice_state_dict[num] = grid_cells[num]
+            r = 100
         
+        elif next_state not in environment[6]:
 
-        state_indice_dict = {}
-        counter = 0
-        for state in grid_cells:
+            r = -2
+        
+        else:
 
-            state = str(state)
-            state_indice_dict[state] = counter
-            counter = counter + 1   
+            r = -1
+        
+        return r
 
-        def PolicyEvaluation(policy,threshold,gamma,randomness):
+    #Note that here we want to evaluate just a fixed policy
+    # and so we are not trying to optimize it 
+    def monte_carlo_prediction(self, num_trials, policy, gamma, state_prob_type):
+
+        #V = np.zeros((environment[6],1))
+
+        #store returns of each trajectory
+        Returns = {} #np.zeros((environment[6],1))
+        #Lens = []
+        #Loop for ever (for each episode)
+        for trial in tqdm(range(num_trials)):
+            
+            #generate an episode
+            trajectory = self.generate_trajectory(policy,trial, state_prob_type)
+            #Lens.append(trajectory)
+
+            #limit the lenght of trajectory
+
+            #total reward
+            G = 0
+
+            trajectory.reverse()
+            
+            
+            returns = {}
+
+            for state in environment[6]:
                 
-            random.seed(randomness)
+                if state not in environment[4] and state != environment[3]:
 
-            #initialize the state values with zeros - minus 1 is because of terminal state or goal
-            V_old = np.zeros((grid_size , 1))
-            V_new = np.zeros((grid_size , 1))
+                    returns[str(state)] = 0
+
+            first_visit = []
+            for step in trajectory[1:]:
+
+                if step not in first_visit:
+
+                    first_visit.append(step)
+
+                    r = self.state_reward(policy,step)
+
+                    G = gamma * G + r
+
+                    returns[str(step)] = returns[str(step)] + G
             
-            delta = threshold + 0.2
-            while delta >= threshold:
-                Delta = []
-                for state_num in range(grid_size):
+            #Returns[trial] = returns
+        
+        V = {}
+        for step in list(returns.keys()):
 
-                    state = indice_state_dict[state_num]
-                    #state_indice = '{}{}'.format(row,col)
+            V[step] = returns[step]/num_trials
+        
 
-                    if state not in environment[4]: 
+        return V,returns
+    def state_action_reward(self, policy,state):
 
-                        #first_sigma = 0
-                        
-                        neighbors = self.neighbor_cells(state)
-                            
-                        #intended_state = [x + y for x, y in zip(state, policy(state))]
-                        
-                        intended_state = policy['{}'.format(state)]
-                        
+        policy_action = policy[str(state)]
+        next_state = [x + y for x, y in zip(state, policy_action)]
+        
 
-                        second_sigma = 0
-                        second_sigma_list = []
-                        for neighbor in neighbors:
+        if next_state in environment[4]:
 
-                            prob_list = prob_dist[state_num].copy()
+            r = -3
+        
+        elif next_state == environment[3]:
 
-                            maximum_p = max(prob_list)
-                            prob_list.remove(maximum_p)
+            r = 100
+        
+        elif next_state not in environment[6]:
 
-                            if neighbor == intended_state:
+            r = -2
+        
+        else:
 
-                                p = maximum_p
-                                #prob_list.remove(p)
+            r = -1
+        
+        return r
 
-                                """else:
 
-                                if len(prob_list) == 4:
-                                    p = max(prob_list)
-                                    prob_list.remove(p)
+    def generate_trajectory_probability_based(self, policy,randomness,epsilon,traj_len,action_prob_type):
 
-                                p = random.choice(prob_dist[state_num]) #prob_dist[state_num][action-1]"""
-                            
-                            else:
-                            
-                                p = random.choice(prob_list)
-
-                                #print(p)
-                            
-                            if neighbor in grid_cells:
-                                indice = state_indice_dict[str(neighbor)]
-                                #print(indice)
-                            
-                            #if the agent reach the goal, we eliminate the -1 reward
-                            if intended_state == environment[3]:
-
-                                second_sigma = second_sigma + p*(10+gamma*V_old[indice])
-                                #print('goal:',second_sigma)
-
-                            
-                            #in this part we dedicated a very large negative reward if the agent drop on a hole
-                            elif neighbor in environment[4]:
-
-                                second_sigma = second_sigma + p*(-3 + gamma*V_old[indice])
-                                #print('hole:',second_sigma)
-                            #in other states, which are not the teriminal state or holes; reward = -1
-
-                            #elif neighbor not in grid_cells:
-
-                            #    second_sigma = second_sigma + p*(-2)
-                                #print('out:',second_sigma)
-
-                            else:
-                                second_sigma = second_sigma + p*(-1 + gamma*V_old[indice])
-                                #print('in:',second_sigma)
-
-                            #second_sigma_list.append(second_sigma)
-                        
-                        #first_sigma = sum(second_sigma_list) #first_sigma + pi * second_sigma_list[action]
-                        
-                        #V_new[state_num] = sum(second_sigma_list) #first_sigma
-                        V_new[state_num] = second_sigma # max(V_new[state_num], second_sigma)
-
-                    delta_ = max([0,np.abs(V_new[state_num] - V_old[state_num])])
-                    Delta.append(delta_)
-
-                    V_old[state_num] = V_new[state_num]
-                    
-                delta = max(Delta)
-                #print('delta',delta)
-                    
-            Final_dict = {}
-            for state in grid_cells:
-
-                if state not in environment[4]:
-
-                    Final_dict[str(state)] = V_new[state_indice_dict[str(state)]]
-
-            return Final_dict
-
-        def policy_improvement(policy,threshold,gamma,randomness):
-
-            policy_stable = False
-            policy = policy_0
-            c = 0
-            while policy_stable == False:
-
-                State_Values = PolicyEvaluation(policy,threshold,gamma,randomness)
-                #print('sv',State_Values)
-
-                #print(max(list(State_Values.values())))
-                #print(c)
-                for state_num in range(grid_size):
-
-                    state = indice_state_dict[state_num]
-                    #state_indice = '{}{}'.format(row,col)
-
-                    if state not in environment[4]:
-                        string_state = '{}'.format(state)
-
-                        first_sigma = 0
-                        
-                        neighbors = self.neighbor_cells(state)
-                            
-                        #intended_state = [x + y for x, y in zip(state, policy(state))]
-                        old_policy = policy
-                        intended_state = policy[string_state]
-
-                        second_sigma = 0
-                        second_sigma_dict = {}
-                        best_value = float("-inf")  # Initialize the best value to negative infinity
-                        best_neighbor = None
-
-                        for neighbor in neighbors:
-
-                            if neighbor in environment[6] and neighbor not in environment[4]:
-
-                                prob_list = prob_dist[state_num].copy()
-                                #print(prob_list)
-                                #print(neighbor)
-                                #print(State_Values)
-
-                                maximum_p = max(prob_list)
-                                prob_list.remove(maximum_p)
-
-                                if neighbor == intended_state:
-
-                                    p = maximum_p
-                                    #prob_list.remove(p)
-
-                                else:
-
-                                    p = random.choice(prob_list) #prob_dist[state_num][action-1]
-                                    #print(p)
-                                
-                                if neighbor in grid_cells:
-                                    indice = state_indice_dict[str(neighbor)]
-                                #print(intended_state , environment[3])
-                                #if the agent reach the goal, we eliminate the -1 reward
-                                if intended_state == str(environment[3]):
-                                    #print(type(intended_state) , type(environment[3]))
-
-                                    second_sigma = second_sigma + p*(10 + gamma*State_Values[string_state])
-                                
-                                #in this part we dedicated a very large negative reward if the agent drop on a hole
-                                elif neighbor in environment[4]:
-
-                                    second_sigma = second_sigma + p*(-3 + gamma*State_Values[string_state])
-                                #in other states, which are not the teriminal state or holes; reward = -1
-
-                                #elif neighbor not in grid_cells:
-
-                                #    second_sigma = second_sigma + p*(-2)
-
-                                else:
-                                    second_sigma = second_sigma + p*(-1 + gamma*State_Values[string_state])
-
-                                #print(second_sigma,neighbor)
-                                #second_sigma = second_sigma[0]
-                                #second_sigma_dict[second_sigma] = neighbor
-                            
-                                if type(second_sigma) == float:
-                                    val = round(second_sigma,5)
-                                else:
-                                    val = round(second_sigma[0],5)
-                                second_sigma_dict[val] = str(neighbor)
-
-                        maximum_value = max(list(second_sigma_dict.keys()))
-                        best_neighbor = second_sigma_dict[maximum_value]
-
-                        if environment[3] in neighbors:
-
-                            policy[string_state] = str(environment[3])
-                        else:
-
-                            policy[string_state] = best_neighbor
-
-                        #if state == [4,2]:
-                            #print(second_sigma_dict)
-                            #print('policy:',policy)
-
-                        if old_policy == policy:
-                            policy_stable = True
-
-                        if str(intended_state) != best_neighbor:
-                            #print(intended_state,best_neighbor)
-                            
-                            policy_stable = False
-
-                c +=1
-
-            
-            if policy_stable == True:
-
-                return State_Values, policy
+        probs = self.probability_distribution(environment[0]*environment[1],action_prob_type)
     
-        optimals = policy_improvement(policy_0,threshold,gamma,randomness)
-        optimal_value = optimals[0]
-        optimal_value.pop(str(environment[3]))
-        
-        optimal_policy = optimals[1]
-        optimal_policy.pop(str(environment[3]))
+        start = environment[2]
+        terminate = start
+        trajectory = [start]
+        c = 0
+        test = []
+        while terminate != environment[3]:
+            random.seed(randomness+c)
+            Actions = [[1, 0],[-1, 0],[0, 1],[0, -1]]
 
-        return optimal_value, optimal_policy
+            #we have two probabilities for epsilon-greedy action selection
+            #It's a kind of exploration-exploitation balancing
+            
+            #probability for exploration on not best action values
+            low_prob = epsilon/len(Actions)
+            high_prob = 1 - epsilon #+ (epsilon/len(Actions))
 
+            #this random action selection is for balancing exploration-exploitation trade-off
+
+            exex_probs = [low_prob,low_prob,low_prob,high_prob]
+            if type(policy) == tuple:
+                policy = policy[1]
+            
+            best_action_value = policy[str(terminate)]
+            #print(type(best_action_value))
+            Actions_copy = Actions.copy()
+            #print(Actions_copy)
+            Actions_copy.remove(best_action_value)
+            exex_actions = Actions_copy + [best_action_value]
+            #print(exex_actions)
+            #print(exex_probs)
+            
+            action = random.choices(exex_actions, exex_probs)[0]
+
+            #second part of action selection
+            Actions.remove(action)
+            sorted_actions = Actions + [action]
+            state_indice = state_indice_dict[str(terminate)]
+            actions_prob = probs[state_indice]
+            actions_prob.sort()
+
+            #print(sorted_actions)
+            #print(actions_prob)
+            #this random action selection is due to the randomness of the environment
+            selected_action = random.choices(sorted_actions, actions_prob)[0]
+            #print(selected_action)
+            #print('=====')
+            next_state = [x + y for x, y in zip(terminate, selected_action)]
+            #if the agent goes out of the gridworld, it stays in its current state
+            if next_state not in environment[6]:
+                next_state = terminate
+            #if it drops into the holes, it goes to the start points
+            elif next_state in environment[4]:
+                next_state = start
+            terminate = next_state
+            trajectory.append(terminate)
+            c = c+1
+
+            if c >traj_len:
+                break
+                #c = traj_len + 1
         
+        if c > traj_len:
+            
+            return False
+            
+        else:
+            return trajectory
+    
+
+    def OnPolicy_MC_prediction(self, num_trials, policy, gamma, epsilon,traj_len, action_prob_type):
+        
+        def reverse_dictionary(dict):
+            reverse_dict = {}
+            for key in list(dict.keys()):
+                val = dict[key]
+                reverse_dict[val] = key
+            return reverse_dict
+
+        Q = {}
+        for state in environment[6]:
+
+            if state not in environment[4]:
+                
+                Q[str(state)] = {}
+
+                for action in ["[1, 0]","[-1, 0]","[0, 1]","[0, -1]"]:
+
+                    #next_state = [x + y for x, y in zip(state, ast.literal_eval(action))]
+
+                    #if (next_state in environment[6]) and next_state not in environment[4]:
+                        
+                    Q[str(state)][action] = random.uniform(1e-9, 1e-8)
+        
+        counter = {}
+        for state in environment[6]:
+
+            if state not in environment[4]:
+                
+                counter[str(state)] = {}
+
+                for action in ["[1, 0]","[-1, 0]","[0, 1]","[0, -1]"]:
+
+                    #next_state = [x + y for x, y in zip(state, ast.literal_eval(action))]
+
+                    #if (next_state in environment[6]) and next_state not in environment[4]:
+                        
+                    counter[str(state)][action] = random.uniform(1e-9, 1e-8)
+        
+        done_trials = 0
+        Policies = [policy]
+        cp = 0
+        for trial in tqdm(range(1,num_trials)):
+            #print(policy['[3,3]'])
+            policy = Policies[cp]
+            trajectory = self.generate_trajectory_probability_based(policy, trial, epsilon,traj_len, action_prob_type)
+            #print(len(trajectory))
+
+            #if len(trajectory) < 100:
+            #print(trajectory)
+            
+            if trajectory:
+                #print(len(trajectory))
+
+                done_trials +=1 
+            
+
+                G = 0
+                returns = {}
+                first_visit = []
+
+                for state in environment[6]:
+
+                    if state not in environment[4]:# and state != environment[3]:
+
+                        returns[str(state)] = {}
+
+                for state in environment[6]:
+                    
+                    if state not in environment[4]:# and state != environment[3]:
+
+                        for action in ["[1, 0]","[-1, 0]","[0, 1]","[0, -1]"]:
+
+                            #next_state = [x + y for x, y in zip(state, ast.literal_eval(action))]
+
+                            #if (next_state in environment[6]) and next_state not in environment[4]:
+
+                            returns[str(state)][action] = random.uniform(1e-9, 1e-8)
+
+                    
+                #print(returns)
+
+                for i in range(len(trajectory[1:])):
+                    step = trajectory[1:][i]
+
+                    if step not in first_visit:
+                        
+                        """state_str = str(step)
+                        if state_str not in returns:
+                            returns[state_str] = {}
+                            for action in ["[1,0]", "[-1,0]", "[0,1]", "[0,-1]"]:
+                                returns[state_str][action] = 0"""  # Initialize all actions with value 0
+                                
+                        first_visit.append(step)
+                        #action = derive_action(trajectory[1:][i + 1], trajectory[1:][i])
+                        last_step = str(trajectory[1:][i])
+                        if type(policy) == tuple:
+                            policy = policy[1]
+                            
+                        action = policy[last_step]
+                        #if action == [0,0]:
+                        r = state_action_reward(policy, step)
+                        G = gamma * G + r
+                        #print(G)
+                        #action_str = str(action)
+                        #print(action_str)
+                        #print(returns[str(step)])
+                        returns[str(step)][str(action)] += G
+                        #print(returns[str(step)][action_str])
+
+                
+
+
+                for state in list(returns.keys()):
+                    for action in ["[1, 0]","[-1, 0]","[0, 1]","[0, -1]"]:
+                        #print(state,action)
+                        #print('q',Q[state][action])
+                        #print(returns[state][action])
+                        #if returns[state]["[-1, 0]"] != 0:
+                        #    print(returns[state]["[-1, 0]"])
+                        #Q[state][action] = returns[state][action] / trial
+
+                        if abs(returns[state][action]) > 1e-3:
+
+                            counter[state][action] = counter[state][action] + 1
+
+                            Q[state][action] = Q[state][action] + returns[state][action]
+
+                            Q[state][action] = Q[state][action] / round(counter[state][action])
+                            #print('f')
+                        
+                        #else:
+
+                        #    Q[state][action] = Q[state][action] + returns[state][action]
+
+                policy = {}
+                for state in list(Q.keys()):
+                    #print('d')
+                    if Q[state] != {}:
+                        value_action_state = reverse_dictionary(Q[state])
+                        #print('value_action_state:',value_action_state)
+                        #print(state)
+                        #print(value_action_state)
+                        Max_val = max(list(value_action_state.keys()))
+                        best_action = value_action_state[Max_val]
+                        policy[state] = ast.literal_eval(best_action)
+                #print(policy)
+                #if policy != policy_0:
+                #    print('f')
+
+                Policies.append(policy)
+                cp = cp + 1
+                if cp == 100:
+                    print(cp)
+        
+            
+        return policy, Q, done_trials, Policies
+      
 if __name__ == "__main__":
-    dp = DynamicProgramming()
+    MC = MonteCarlo()
 
     # Generate the environment using your generate_grid_world function
-    environment = dp.generate_grid_world(5, 4,4,4,39)
+    environment = MC.generate_grid_world(5, 4,4,4,39)
+
+    state_indice_dict = {}
+    counter = 0
+    for state in environment[6]:
+
+        state = str(state)
+        state_indice_dict[state] = counter
+        counter = counter + 1
+
+    policy_0 = MC.arbitrary_policy(41)
 
     # Obtain the optimal value and policy using policy_iteration
-    optimal_value, optimal_policy = dp.policy_iteration(0.9,.7,42,'stochastic')
+    value_functions, returns = MC.monte_carlo_prediction(1000,policy_0,0.9,'stochastic')
 
     # Print the results
-    print("Optimal Value:")
-    print(optimal_value)
-    print("Optimal Policy:")
-    #print(optimal_policy)
+    print("Value Functions:")
+    print(value_functions)
+    print("Returns:")
+    print(returns)
