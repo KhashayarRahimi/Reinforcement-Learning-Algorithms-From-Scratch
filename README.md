@@ -7,7 +7,7 @@ The primary motivation behind this project is to demystify the inner workings of
 
 Note:
 
-Each jupyter notebook of this repository consists of the algorithms of one of the file of the following books:
+Each jupyter notebook of this repository consists of the algorithms of one of the chapter of the following books:
 
 Reinforcement Learning An Introduction
 Richard S. Sutton and Andrew G. Barto
